@@ -95,3 +95,51 @@ aggregate(data = tele_norm, yyes ~ cluster, mean)
 
 ```
 
+## Cluster 1
+
+```{r}
+library(dplyr)
+Cluster1_Logistic <- tele_norm %>%
+filter(cluster==1)
+
+Cluster1_Logistic_Model <- glm(yyes ~ age + jobadmin. + jobblue.collar + maritalmarried + maritalsingle + educationbasic.9y + educationhigh.school + educationuniversity.degree + defaultunknown + housingyes + monthjun + monthmay + day_of_weekmon + day_of_weekthu + day_of_weektue + day_of_weekwed, data = Cluster1_Logistic, family = "binomial")
+summary(Cluster1_Logistic_Model)
+
+library(gmodels)
+library(caret)
+library(class)
+
+Predict_Cluster1 <- predict(Cluster1_Logistic_Model, newdata = Cluster1_Logistic)
+Predict_Cluster1 <- ifelse(Predict_Cluster1 > .5, 1, 0)
+
+CrossTable(x = Cluster1_Logistic_Model$y, y = Predict_Cluster1, 
+           prop.chisq=FALSE)
+
+Cluster1_Table <- table(Cluster1_Logistic_Model$y, Predict_Cluster1)
+CrossTable(Cluster1_Table)
+```
+
+## Cluster 2
+
+```{r}
+library(dplyr)
+Cluster2_Logistic <- tele_norm %>%
+filter(cluster==2)
+
+Cluster2_Logistic_Model <- glm(yyes ~ age + jobadmin. + jobblue.collar + maritalmarried + educationbasic.9y + educationhigh.school + educationuniversity.degree + defaultunknown + housingyes + monthmay + day_of_weekmon + day_of_weekthu + day_of_weektue + day_of_weekwed, data = Cluster2_Logistic, family = "binomial")
+summary(Cluster2_Logistic_Model)
+```
+
+
+## Cluster 4
+
+```{r}
+library(dplyr)
+Cluster4_Logistic <- tele_norm %>%
+filter(cluster==4)
+
+Cluster4_Logistic_Model <- glm(yyes ~ age + jobadmin. + jobblue.collar + jobtechnician +  maritalmarried + maritalsingle + educationhigh.school + educationuniversity.degree + defaultunknown + housingyes + monthaug + monthjul + day_of_weekmon + day_of_weekthu + day_of_weektue + day_of_weekwed, data = Cluster4_Logistic, family = "binomial")
+summary(Cluster4_Logistic_Model)
+```
+
+

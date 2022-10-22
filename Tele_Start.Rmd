@@ -117,6 +117,29 @@ CrossTable(x = Cluster1_Logistic_Model$y, y = Predict_Cluster1,
 
 Cluster1_Table <- table(Cluster1_Logistic_Model$y, Predict_Cluster1)
 CrossTable(Cluster1_Table)
+
+# KNN Model
+test_size_1 = round(nrow(Cluster1_Logistic)*0.8)
+cluster1_test_set <- sample(1:nrow(Cluster1_Logistic), test_size_1) 
+cluster1_train <- Cluster1_Logistic[-cluster1_test_set, -match("yyes",names(Cluster1_Logistic))]
+cluster1_test <- Cluster1_Logistic[cluster1_test_set, -match("yyes",names(Cluster1_Logistic))]
+k_val <- round(sqrt(nrow(cluster1_train)))
+#Now the response (aka Labels) - only the yyes column
+cluster1_train_labels <- Cluster1_Logistic[-cluster1_test_set, "yyes"]
+cluster1_test_labels <- Cluster1_Logistic[cluster1_test_set, "yyes"]
+cluster1_train_labels <- as.factor(cluster1_train_labels)
+cluster1_test_labels <- as.factor(cluster1_test_labels)
+
+Cluster1_test_pred <- knn(train = cluster1_train, test = cluster1_test,
+                      cl = cluster1_train_labels, k=k_val)
+
+#Evaluate model results
+CrossTable(x = cluster1_test_labels, y = Cluster1_test_pred, 
+           prop.chisq=FALSE)
+
+# example using the caret package
+# calculates everything for you
+confusionMatrix(Cluster1_test_pred, cluster1_test_labels, positive = "1")
 ```
 
 ## Cluster 2
@@ -128,6 +151,34 @@ filter(cluster==2)
 
 Cluster2_Logistic_Model <- glm(yyes ~ age + jobadmin. + jobblue.collar + maritalmarried + educationbasic.9y + educationhigh.school + educationuniversity.degree + defaultunknown + housingyes + monthmay + day_of_weekmon + day_of_weekthu + day_of_weektue + day_of_weekwed, data = Cluster2_Logistic, family = "binomial")
 summary(Cluster2_Logistic_Model)
+
+library(gmodels)
+library(caret)
+library(class)
+
+
+# KNN Model
+test_size_2 = round(nrow(Cluster2_Logistic)*0.8)
+cluster2_test_set <- sample(1:nrow(Cluster2_Logistic), test_size_2) 
+cluster2_train <- Cluster2_Logistic[-cluster2_test_set, -match("yyes",names(Cluster2_Logistic))]
+cluster2_test <- Cluster2_Logistic[cluster2_test_set, -match("yyes",names(Cluster2_Logistic))]
+k_val <- round(sqrt(nrow(cluster2_train)))
+#Now the response (aka Labels) - only the yyes column
+cluster2_train_labels <- Cluster2_Logistic[-cluster2_test_set, "yyes"]
+cluster2_test_labels <- Cluster2_Logistic[cluster2_test_set, "yyes"]
+cluster2_train_labels <- as.factor(cluster2_train_labels)
+cluster2_test_labels <- as.factor(cluster2_test_labels)
+
+Cluster2_test_pred <- knn(train = cluster2_train, test = cluster2_test,
+                      cl = cluster2_train_labels, k=k_val)
+
+#Evaluate model results
+CrossTable(x = cluster2_test_labels, y = Cluster2_test_pred, 
+           prop.chisq=FALSE)
+
+# example using the caret package
+# calculates everything for you
+confusionMatrix(Cluster2_test_pred, cluster2_test_labels, positive = "1")
 ```
 
 
@@ -140,6 +191,34 @@ filter(cluster==4)
 
 Cluster4_Logistic_Model <- glm(yyes ~ age + jobadmin. + jobblue.collar + jobtechnician +  maritalmarried + maritalsingle + educationhigh.school + educationuniversity.degree + defaultunknown + housingyes + monthaug + monthjul + day_of_weekmon + day_of_weekthu + day_of_weektue + day_of_weekwed, data = Cluster4_Logistic, family = "binomial")
 summary(Cluster4_Logistic_Model)
+
+library(gmodels)
+library(caret)
+library(class)
+
+
+# KNN Model
+test_size_4 = round(nrow(Cluster4_Logistic)*0.8)
+cluster4_test_set <- sample(1:nrow(Cluster4_Logistic), test_size_4) 
+cluster4_train <- Cluster4_Logistic[-cluster4_test_set, -match("yyes",names(Cluster4_Logistic))]
+cluster4_test <- Cluster4_Logistic[cluster4_test_set, -match("yyes",names(Cluster4_Logistic))]
+k_val <- round(sqrt(nrow(cluster4_train)))
+#Now the response (aka Labels) - only the yyes column
+cluster4_train_labels <- Cluster4_Logistic[-cluster4_test_set, "yyes"]
+cluster4_test_labels <- Cluster2_Logistic[cluster4_test_set, "yyes"]
+cluster4_train_labels <- as.factor(cluster4_train_labels)
+cluster4_test_labels <- as.factor(cluster4_test_labels)
+
+Cluster4_test_pred <- knn(train = cluster4_train, test = cluster4_test,
+                      cl = cluster4_train_labels, k=k_val)
+
+#Evaluate model results
+CrossTable(x = cluster4_test_labels, y = Cluster4_test_pred, 
+           prop.chisq=FALSE)
+
+# example using the caret package
+# calculates everything for you
+confusionMatrix(Cluster4_test_pred, cluster4_test_labels, positive = "1")
 ```
 
 

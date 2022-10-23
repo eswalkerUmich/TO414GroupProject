@@ -156,6 +156,13 @@ library(gmodels)
 library(caret)
 library(class)
 
+Predict_Cluster2 <- predict(Cluster2_Logistic_Model, newdata = Cluster2_Logistic)
+Predict_Cluster2 <- ifelse(Predict_Cluster2 > .5, 1, 0)
+
+CrossTable(x = Cluster2_Logistic_Model$y, y = Predict_Cluster2, 
+           prop.chisq=FALSE)
+
+confusionMatrix(Predict_Cluster2, Cluster2_Logistic_Model$y, positive = "1")
 
 # KNN Model
 test_size_2 = round(nrow(Cluster2_Logistic)*0.8)
@@ -196,6 +203,13 @@ library(gmodels)
 library(caret)
 library(class)
 
+Predict_Cluster4 <- predict(Cluster4_Logistic_Model, newdata = Cluster4_Logistic)
+Predict_Cluster4 <- ifelse(Predict_Cluster4 > .5, 1, 0)
+
+CrossTable(x = Cluster4_Logistic_Model$y, y = Predict_Cluster4, 
+           prop.chisq=FALSE)
+
+confusionMatrix(Predict_Cluster2, Cluster2_Logistic_Model$y, positive = "1")
 
 # KNN Model
 test_size_4 = round(nrow(Cluster4_Logistic)*0.8)

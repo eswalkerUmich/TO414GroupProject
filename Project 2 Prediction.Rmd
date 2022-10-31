@@ -1,0 +1,41 @@
+---
+title: "TO 414 Group Project 2"
+author: "Marcus Frankel, Matthew Dugoff, Emily Walker, Nathan Lee, Young-Bin Kim"
+date: "10/31/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Business Question
+- The data set in which we are analyzing has 74,111 historic listings on AirBnB. For this project we are focusing solely on the 22,453 LA listings in order to predict the price range within a given city. Variables include both property characteristics like bedrooms and amenities, as well as listing characteristics like average review score and description.
+- Business Question: How should LA homeowners set the price of their properties on vacation rental sites?
+
+```{r}
+airbnb <- read.csv("train.csv")
+
+summary(airbnb)
+str(airbnb)
+
+airbnb <- subset(airbnb, city == "LA")
+airbnb$id <- NULL
+airbnb$thumbnail_url <- NULL
+
+airbnb$property_type <- as.factor(airbnb$property_type)
+airbnb$room_type <- as.factor(airbnb$room_type)
+airbnb$bed_type <- as.factor(airbnb$bed_type)
+airbnb$cancellation_policy <- as.factor(airbnb$cancellation_policy)
+airbnb$zipcode <- as.factor(airbnb$zipcode)
+
+```
+
+## Linear Regression
+
+```{r}
+model1 <- lm(log_price ~ property_type + room_type + accommodates + bathrooms + bed_type + cancellation_policy + cleaning_fee + host_has_profile_pic + host_identity_verified + instant_bookable + neighbourhood + number_of_reviews + review_scores_rating + zipcode + bedrooms + beds, airbnb)
+summary(model1)
+
+```
+

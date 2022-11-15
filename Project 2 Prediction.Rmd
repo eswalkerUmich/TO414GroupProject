@@ -74,6 +74,9 @@ airbnb$amenities_hottub <- grepl("Hot tub", airbnb$amenities)
 airbnb$amenities_lockonbedroomdoor <- grepl("Lock on bedroom", airbnb$amenities)
 airbnb$amenities_parking <- grepl("Free parking", airbnb$amenities)
 
+airbnb$desc_length <- sapply(strsplit(airbnb$description, " "), length)
+
+
 head(airbnb)
 ```
 

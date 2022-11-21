@@ -104,6 +104,7 @@ airbnb_mm$`neighbourhoodAlondra Park` <- NULL
 airbnb_mm$neighbourhoodArtesia <- NULL
 airbnb_mm$neighbourhoodVernon <- NULL
 airbnb_mm$neighbourhoodWilmington <- NULL
+airbnb_mm$`neighbourhoodLa Habra` <- NULL
 airbnb_mm$zipcode10023 <- NULL
 airbnb_mm$zipcode210 <- NULL
 airbnb_mm$`zipcode90035-4475` <- NULL
@@ -122,20 +123,12 @@ airbnb_mm$zipcode93105 <- NULL
 airbnb_mm$zipcode90630 <- NULL
 airbnb_mm$`zipcodeNear 91304` <- NULL
 
-head(airbnb_mm)
 ```
 
 ## Test and Train Datatsets
 ```{r}
 set.seed(12345)
 test_set <- sample(1:nrow(airbnb_mm), 0.7 * nrow(airbnb_mm)) 
-
-#normalize <- function(x) {
-#  return ((x - min(x)) / (max(x)- min(x)))
-#}
-
-#col_normalize <- airbnb[ , c(5, 6, 13, 18, 19)]
-#airbnb_normal[ , c(5, 6, 13, 18, 19)] <- lapply(col_normalize, normalize)
 
 airbnb_train <- airbnb_mm[test_set,] 
 airbnb_test <- airbnb_mm[-test_set,]
@@ -150,10 +143,13 @@ str(airbnb_train)
 ## Linear Regression
 
 ```{r}
-linear_airbnb <- lm(log_price ~ property_type + room_type + accommodates + bathrooms + bed_type + cancellation_policy + cleaning_fee + host_has_profile_pic + host_identity_verified + instant_bookable + neighbourhood + number_of_reviews + review_scores_rating + zipcode + bedrooms + beds, data = airbnb_train)
 
+linear_airbnb <- lm(log_price ~., data = airbnb_train)
 summary(linear_airbnb)
 
+linear_predict <- predict(linear_airbnb, newdata = airbnb_test)
+linear_result <- postResample(linear_predict, airbnb_test$log_price)
+linear_result
 ```
 
 ## KNN
@@ -196,8 +192,7 @@ airbnb_svm <- ksvm(log_price ~., data = airbnb_train,
                           kernel = "vanilladot")
 
 airbnb_svm_pred <- predict(airbnb_svm, airbnb_test)
-
-
+print(airbnb_svm)
 
 ```
 

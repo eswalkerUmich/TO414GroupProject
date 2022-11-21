@@ -192,8 +192,22 @@ airbnb_svm <- ksvm(log_price ~., data = airbnb_train,
                           kernel = "vanilladot")
 
 airbnb_svm_pred <- predict(airbnb_svm, airbnb_test)
-print(airbnb_svm)
 
+svm_result <- postResample(airbnb_svm_pred, airbnb_test$log_price)
+svm_result
+
+# Improving Model
+airbnb_svm_improved <- ksvm(log_price ~., data = airbnb_train,
+                          kernel = "laplacedot")
+
+airbnb_svm_pred_improved <- predict(airbnb_svm_improved, airbnb_test)
+
+svm_result_improved <- postResample(airbnb_svm_pred_improved, airbnb_test$log_price)
+svm_result_improved
+
+# Kernel = polydot: Rsquared = 0.7905900
+# Kernel = laplacedot: Rsquared = 0.7988569
+# Kernel = besseldot: Rsquared = 0.7687704
 ```
 
 ## analysis

@@ -1,0 +1,208 @@
+---
+title: "TO 414 Group Project 2"
+author: "Marcus Frankel, Matthew Dugoff, Emily Walker, Nathan Lee, Young-Bin Kim"
+date: "10/31/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Business Question
+- The data set in which we are analyzing has 74,111 historic listings on AirBnB. For this project we are focusing solely on the 22,453 LA listings in order to predict the price range within a given city. Variables include both property characteristics like bedrooms and amenities, as well as listing characteristics like average review score and description.
+- Business Question: How should LA homeowners set the price of their properties on vacation rental sites?
+
+## Libraries
+```{r}
+library(class)
+library(caret)
+library(gmodels)
+library(neuralnet)
+library(C50)
+library(kernlab)
+library(lubridate)
+```
+
+# Import and Clean
+```{r}
+# Import dataset & filter location to LA
+airbnb <- read.csv("train.csv")
+airbnb <- subset(airbnb, city == "LA")
+
+# Create new columns of amenities
+airbnb$amenities_TV <- as.factor(ifelse(grepl("TV", airbnb$amenities) == TRUE, 1, 0))
+airbnb$amenities_kitchen <- as.factor(ifelse(grepl("Kitchen", airbnb$amenities) == TRUE, 1, 0))
+airbnb$amenities_wifi <- as.factor(ifelse(grepl("Internet", airbnb$amenities)== TRUE, 1, 0))
+airbnb$amenities_pool <- as.factor(ifelse(grepl("Pool", airbnb$amenities)== TRUE, 1, 0))
+airbnb$amenities_AC <- as.factor(ifelse(grepl("Air conditioning", airbnb$amenities)== TRUE, 1, 0))
+airbnb$amenities_gym <- as.factor(ifelse(grepl("Gym", airbnb$amenities)== TRUE, 1, 0))
+airbnb$amenities_heating <- as.factor(ifelse(grepl("Heating", airbnb$amenities)== TRUE, 1, 0))
+airbnb$amenities_hottub <- as.factor(ifelse(grepl("Hot tub", airbnb$amenities)== TRUE, 1, 0))
+airbnb$amenities_lockonbedroomdoor <- as.factor(ifelse(grepl("Lock on bedroom", airbnb$amenities)== TRUE, 1, 0))
+airbnb$amenities_parking <- as.factor(ifelse(grepl("Free parking", airbnb$amenities)== TRUE, 1, 0))
+
+# Clean variables
+airbnb$host_since <- as.Date(airbnb$host_since)
+airbnb$last_review <- as.Date(airbnb$last_review)
+
+airbnb$host_since_month <- as.factor(month(airbnb$host_since))
+airbnb$host_since_year <- as.factor(year(airbnb$host_since))
+airbnb$last_review_month <- as.factor(month(airbnb$last_review))
+airbnb$last_review_year <- as.factor(year(airbnb$last_review))
+
+airbnb$property_type <- as.factor(airbnb$property_type)
+airbnb$room_type <- as.factor(airbnb$room_type)
+airbnb$bed_type <- as.factor(airbnb$bed_type)
+airbnb$cancellation_policy <- as.factor(airbnb$cancellation_policy)
+airbnb$cleaning_fee <- as.factor(ifelse(airbnb$cleaning_fee == "True", 1, 0))
+airbnb$zipcode <- as.factor(airbnb$zipcode)
+airbnb$neighbourhood <- as.factor(airbnb$neighbourhood)
+
+airbnb$host_has_profile_pic <- as.factor(ifelse(airbnb$host_has_profile_pic == "t", 1, 0))
+airbnb$host_identity_verified <- as.factor(ifelse(airbnb$host_identity_verified == "t", 1, 0))
+airbnb$instant_bookable <- as.factor(ifelse(airbnb$instant_bookable == "t", 1, 0))
+
+airbnb$host_response_rate <- as.numeric(gsub("%", "", as.character(airbnb$host_response_rate)))
+
+airbnb$desc_length <- sapply(strsplit(airbnb$description, " "), length)
+
+# Remove unnecessary variables
+airbnb$id <- NULL
+airbnb$thumbnail_url <- NULL
+airbnb$amenities <- NULL
+airbnb$first_review <- NULL
+airbnb$latitude <- NULL 
+airbnb$longitude <- NULL 
+airbnb$name <- NULL
+airbnb$city <- NULL
+airbnb$description <- NULL
+airbnb$host_since <- NULL
+airbnb$last_review <- NULL
+
+# Remove NAs
+airbnb <- na.omit(airbnb)
+
+# Convert to model matrix
+airbnb_mm <- as.data.frame(model.matrix(~.-1, airbnb))
+
+# Normalize
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x)- min(x)))
+}
+
+airbnb_mm[2:560] <- lapply(airbnb_mm[2:560], normalize)
+
+# Remove NaN
+airbnb_mm$`property_typeCasa particular` <- NULL
+airbnb_mm$property_typeLighthouse <- NULL
+airbnb_mm$`property_typeParking Space` <- NULL
+airbnb_mm$`property_typeVacation home` <- NULL
+airbnb_mm$cancellation_policysuper_strict_30 <- NULL
+airbnb_mm$`neighbourhoodAlondra Park` <- NULL
+airbnb_mm$neighbourhoodArtesia <- NULL
+airbnb_mm$`neighbourhoodLa Habra`<- NULL
+airbnb_mm$neighbourhoodVernon <- NULL
+airbnb_mm$neighbourhoodWilmington <- NULL
+airbnb_mm$zipcode10023 <- NULL
+airbnb_mm$zipcode210 <- NULL
+airbnb_mm$`zipcode90035-4475` <- NULL
+airbnb_mm$zipcode9004 <- NULL
+airbnb_mm$zipcode90095 <- NULL
+airbnb_mm$`zipcode90403-2638` <- NULL
+airbnb_mm$zipcode90631 <- NULL
+airbnb_mm$zipcode90701 <- NULL
+airbnb_mm$zipcode90840 <- NULL
+airbnb_mm$zipcode91308 <- NULL
+airbnb_mm$zipcode91740 <- NULL
+airbnb_mm$zipcode91786 <- NULL
+airbnb_mm$zipcode92614 <- NULL
+airbnb_mm$zipcode92880 <- NULL
+airbnb_mm$zipcode93105 <- NULL
+airbnb_mm$zipcode90630 <- NULL
+airbnb_mm$`zipcodeNear 91304` <- NULL
+
+```
+
+## Test and Train Datatsets
+```{r}
+# Create test and train datasets
+set.seed(12345)
+test_set <- sample(1:nrow(airbnb_mm), 0.7 * nrow(airbnb_mm)) 
+
+airbnb_train <- airbnb_mm[test_set,] 
+airbnb_test <- airbnb_mm[-test_set,]
+
+airbnb_train_labels <- airbnb_mm[test_set, "log_price"]
+airbnb_test_labels <- airbnb_mm[-test_set, "log_price"]
+```
+
+## Linear Regression
+
+```{r}
+linear_airbnb <- lm(log_price ~ ., data = airbnb_train)
+
+summary(linear_airbnb)
+```
+
+## KNN
+```{r}
+knn_train <- airbnb_train[,-match("log_price", names(airbnb_train))]
+knn_test <- airbnb_test[,-match("log_price", names(airbnb_test))]
+
+sqrt(nrow(airbnb_train))
+
+airbnb_knn <- knnregTrain(knn_train, knn_test, airbnb_train_labels, k = 100, use.all = TRUE)
+```
+
+## ANN
+```{r}
+airbnb_ann <- neuralnet(formula = log_price ~., data = airbnb_train, stepmax = 1000000, linear.output = TRUE)
+
+ann_results <- compute(airbnb_ann, airbnb_test)
+ann_pred <- ann_results$net.result
+```
+
+## Decision Tree
+
+regression tree
+
+cart package
+
+
+## SVM 
+```{r}
+airbnb_svm <- ksvm(log_price ~., data = airbnb_train,
+                          kernel = "vanilladot")
+
+airbnb_svm_pred <- predict(airbnb_svm, airbnb_test)
+
+
+
+```
+
+## analysis
+
+postresample
+in carat package
+
+
+# Combined Prediction Table
+
+```{r}
+#combined_pred <- data.frame(, airbnb_test$log_price)
+#str(combined_pred)
+```
+
+# Test/Train using Combined Data
+```{r}
+set.seed(12345)
+test_set2 <- sample(1:nrow(combined_pred), 0.7 * nrow(combined_pred)) 
+
+tele_train2 <- combined_pred[test_set2,] 
+tele_test2 <- combined_pred[-test_set2,]
+
+
+
+
+

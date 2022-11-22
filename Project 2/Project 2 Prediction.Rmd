@@ -135,9 +135,6 @@ airbnb_test <- airbnb_mm[-test_set,]
 
 airbnb_train_labels <- airbnb_mm[test_set, "log_price"]
 airbnb_test_labels <- airbnb_mm[-test_set, "log_price"]
-
-str(airbnb_train)
-
 ```
 
 ## Linear Regression
@@ -147,38 +144,43 @@ str(airbnb_train)
 linear_airbnb <- lm(log_price ~., data = airbnb_train)
 summary(linear_airbnb)
 
-linear_predict <- predict(linear_airbnb, newdata = airbnb_test)
+linear_pred <- predict(linear_airbnb, newdata = airbnb_test)
+
+# Result
 linear_result <- postResample(linear_predict, airbnb_test$log_price)
 linear_result
 ```
 
 ## KNN
-```{r}
+```{r, cache=TRUE}
 knn_train <- airbnb_train[,-match("log_price", names(airbnb_train))]
 knn_test <- airbnb_test[,-match("log_price", names(airbnb_test))]
 
 sqrt(nrow(airbnb_train))
 
-str(knn_train)
+knn_pred <- knnregTrain(knn_train, knn_test, airbnb_train_labels, k = 100, use.all = TRUE)
 
-airbnb_knn <- knnregTrain(knn_train, knn_test, airbnb_train_labels, k = 100, use.all = TRUE)
-
+# Result
+postResample(knn_pred, airbnb_test$log_price)
 ```
 
 ## ANN
-```{r}
-airbnb_ann <- neuralnet(formula = log_price ~., data = airbnb_train, stepmax = 1000000, linear.output = TRUE)
+```{r, cache=TRUE}
+names(airbnb_train) <- make.names(names(airbnb_train))
+names(airbnb_test) <- make.names(names(airbnb_test))
+
+airbnb_ann <- neuralnet(log_price ~., airbnb_train, stepmax = 1000000, threshold = 0.1, linear.output = TRUE)
 
 ann_results <- compute(airbnb_ann, airbnb_test)
 ann_pred <- ann_results$net.result
 
-
-
+# Result
+postResample(ann_pred, airbnb_test$log_price)
 ```
 
 ## Decision Tree
 ```{r}
-airbnb_dt <- rpart(formula = log_price ~ ., data = airbnb_train, method = "anova", cp = 0.008)
+airbnb_dt <- rpart(formula = log_price ~ ., data = airbnb_train, method = "anova")
 
 dt_pred <- predict(airbnb_dt, airbnb_test)
 
@@ -219,7 +221,8 @@ in carat package
 # Combined Prediction Table
 
 ```{r}
-combined_pred <- data.frame(, airbnb_test$log_price)
+combined_pred <- data.frame(linear_pred, knn_pred, dt_pred, ann_pred, airbnb_svm_pred_improved, airbnb_test$log_price)
+
 str(combined_pred)
 ```
 
@@ -228,10 +231,16 @@ str(combined_pred)
 set.seed(12345)
 test_set2 <- sample(1:nrow(combined_pred), 0.7 * nrow(combined_pred)) 
 
-tele_train2 <- combined_pred[test_set2,] 
-tele_test2 <- combined_pred[-test_set2,]
+airbnb_train2 <- combined_pred[test_set2,] 
+airbnb_test2 <- combined_pred[-test_set2,]
 
 
+# Stacked decision tree model
+airbnb_stacked_dt <- rpart(formula = airbnb_test.log_price ~ ., data = airbnb_train2, method = "anova")
+airbnb_stacked_dt
 
+stacked_dt_pred <- predict(airbnb_stacked_dt, airbnb_test2)
 
-
+# Results
+postResample(stacked_dt_pred, airbnb_test2$airbnb_test.log_price)
+```

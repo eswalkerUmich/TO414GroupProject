@@ -1,0 +1,121 @@
+---
+title: "TO 414 Group Project 2"
+author: "Marcus Frankel, Matthew Dugoff, Emily Walker, Nathan Lee, Young-Bin Kim"
+date: "10/31/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Business Question
+- The data set in which we are analyzing has 74,111 historic listings on AirBnB. For this project we are focusing solely on the 22,453 LA listings in order to predict the price range within a given city. Variables include both property characteristics like bedrooms and amenities, as well as listing characteristics like average review score and description.
+- Business Question: How should LA homeowners set the price of their properties on vacation rental sites?
+
+## Libraries
+```{r}
+library(class)
+library(caret)
+library(gmodels)
+library(neuralnet)
+library(C50)
+library(kernlab)
+```
+
+# Import and Clean
+```{r}
+airbnb <- read.csv("train.csv")
+
+airbnb <- subset(airbnb, city == "LA")
+airbnb$id <- NULL
+airbnb$thumbnail_url <- NULL
+
+airbnb$property_type <- as.factor(airbnb$property_type)
+airbnb$room_type <- as.factor(airbnb$room_type)
+airbnb$bed_type <- as.factor(airbnb$bed_type)
+airbnb$cancellation_policy <- as.factor(airbnb$cancellation_policy)
+airbnb$zipcode <- as.factor(airbnb$zipcode)
+
+airbnb$first_review <- NULL
+airbnb$latitude <- NULL 
+airbnb$longitude <- NULL 
+airbnb$name <- NULL
+airbnb$city <- NULL
+
+airbnb$neighbourhood <- as.factor(airbnb$neighbourhood)
+
+str(airbnb)
+
+```
+
+## Test and Train Datatsets
+```{r}
+set.seed(12345)
+test_set <- sample(1:nrow(airbnb), 0.7 * nrow(airbnb)) 
+
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x)- min(x)))
+}
+
+```
+
+## Text Organization
+```{r}
+# Create new columns of amenities
+airbnb$amenities_TV <- grepl("TV", airbnb$amenities)
+airbnb$amenities_kitchen <- grepl("Kitchen", airbnb$amenities)
+airbnb$amenities_wifi <- grepl("Internet", airbnb$amenities)
+airbnb$amenities_pool <- grepl("Pool", airbnb$amenities)
+airbnb$amenities_AC <- grepl("Air conditioning", airbnb$amenities)
+airbnb$amenities_gym <- grepl("Gym", airbnb$amenities)
+airbnb$amenities_heating <- grepl("Heating", airbnb$amenities)
+airbnb$amenities_hottub <- grepl("Hot tub", airbnb$amenities)
+airbnb$amenities_lockonbedroomdoor <- grepl("Lock on bedroom", airbnb$amenities)
+airbnb$amenities_parking <- grepl("Free parking", airbnb$amenities)
+
+airbnb$desc_length <- sapply(strsplit(airbnb$description, " "), length)
+
+
+head(airbnb)
+```
+
+
+
+## Linear Regression
+
+```{r}
+model1 <- lm(log_price ~ property_type + room_type + accommodates + bathrooms + bed_type + cancellation_policy + cleaning_fee + host_has_profile_pic + host_identity_verified + instant_bookable + neighbourhood + number_of_reviews + review_scores_rating + zipcode + bedrooms + beds, data = airbnb)
+summary(model1)
+
+```
+
+## KNN
+
+knnreg function?
+
+## ANN
+
+
+## Decision Tree
+
+regression tree
+
+cart package
+
+
+## SVM 
+
+
+## analysis
+
+postresample
+in carat package
+
+
+
+
+
+
+
+

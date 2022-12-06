@@ -140,19 +140,29 @@ airbnb_test_labels <- airbnb_mm[-test_set, "log_price"]
 ## Linear Regression
 
 ```{r}
+# First model
+airbnb_lm <- lm(log_price ~., data = airbnb_train)
 
-linear_airbnb <- lm(log_price ~., data = airbnb_train)
-summary(linear_airbnb)
+lm_pred <- predict(airbnb_lm, newdata = airbnb_test)
 
-linear_pred <- predict(linear_airbnb, newdata = airbnb_test)
+## Result
+postResample(lm_pred, airbnb_test$log_price)
 
-# Result
-linear_result <- postResample(linear_predict, airbnb_test$log_price)
-linear_result
+# Second model
+ctrl <- trainControl(method = "cv", number = 5)
+
+airbnb_lm2 <- train(log_price ~., data = airbnb_train, method = "lm", trControl = ctrl)
+
+lm2_pred <- predict(airbnb_lm2, newdata = airbnb_test)
+
+## Result
+postResample(lm2_pred, airbnb_test$log_price)
+
 ```
 
 ## KNN
 ```{r, cache=TRUE}
+# Model
 knn_train <- airbnb_train[,-match("log_price", names(airbnb_train))]
 knn_test <- airbnb_test[,-match("log_price", names(airbnb_test))]
 
@@ -160,12 +170,14 @@ sqrt(nrow(airbnb_train))
 
 knn_pred <- knnregTrain(knn_train, knn_test, airbnb_train_labels, k = 100, use.all = TRUE)
 
-# Result
+## Result
 postResample(knn_pred, airbnb_test$log_price)
+
 ```
 
 ## ANN
 ```{r, cache=TRUE}
+# First model
 names(airbnb_train) <- make.names(names(airbnb_train))
 names(airbnb_test) <- make.names(names(airbnb_test))
 
@@ -174,56 +186,53 @@ airbnb_ann <- neuralnet(log_price ~., airbnb_train, stepmax = 1000000, threshold
 ann_results <- compute(airbnb_ann, airbnb_test)
 ann_pred <- ann_results$net.result
 
-# Result
+## Result
 postResample(ann_pred, airbnb_test$log_price)
 ```
 
 ## Decision Tree
 ```{r}
+# First model
 airbnb_dt <- rpart(formula = log_price ~ ., data = airbnb_train, method = "anova")
 
 dt_pred <- predict(airbnb_dt, airbnb_test)
 
+## Result
 postResample(dt_pred, airbnb_test$log_price)
+
+# Second model
+airbnb_dt2 <- train(log_price ~ ., data = airbnb_train, method = "rpart", trControl = ctrl)
+
+dt2_pred <- predict(airbnb_dt2, airbnb_test)
+
+## Result
+postResample(dt2_pred, airbnb_test$log_price)
 ```
 
 
 ## SVM 
 ```{r}
-airbnb_svm <- ksvm(log_price ~., data = airbnb_train,
-                          kernel = "vanilladot")
+# First model
+airbnb_svm <- ksvm(log_price ~., data = airbnb_train, kernel = "polydot")
 
-airbnb_svm_pred <- predict(airbnb_svm, airbnb_test)
+svm_pred <- predict(airbnb_svm, airbnb_test)
 
-svm_result <- postResample(airbnb_svm_pred, airbnb_test$log_price)
-svm_result
+## Result
+postResample(svm_pred, airbnb_test$log_price)
 
-# Improving Model
-airbnb_svm_improved <- ksvm(log_price ~., data = airbnb_train,
-                          kernel = "laplacedot")
+# Second model
+airbnb_svm2 <- ksvm(log_price ~., data = airbnb_train, kernel = "polydot", cross = 5)
+svm2_pred <- predict(airbnb_svm2, airbnb_test)
 
-airbnb_svm_pred_improved <- predict(airbnb_svm_improved, airbnb_test)
-
-svm_result_improved <- postResample(airbnb_svm_pred_improved, airbnb_test$log_price)
-svm_result_improved
-
-# Kernel = polydot: Rsquared = 0.7905900
-# Kernel = laplacedot: Rsquared = 0.7988569
-# Kernel = besseldot: Rsquared = 0.7687704
+## Result
+postResample(svm2_pred, airbnb_test$log_price)
 ```
-
-## analysis
-
-postresample
-in carat package
 
 
 # Combined Prediction Table
 
 ```{r}
-combined_pred <- data.frame(linear_pred, knn_pred, dt_pred, ann_pred, airbnb_svm_pred_improved, airbnb_test$log_price)
-
-str(combined_pred)
+combined_pred <- data.frame(lm_pred, knn_pred, dt_pred, ann_pred, svm2_pred, airbnb_test$log_price)
 ```
 
 # Test/Train using Combined Data
@@ -243,4 +252,9 @@ stacked_dt_pred <- predict(airbnb_stacked_dt, airbnb_test2)
 
 # Results
 postResample(stacked_dt_pred, airbnb_test2$airbnb_test.log_price)
+
+## include plot of combined dt
 ```
+
+*put more text*
+R-sq as confidence metric   
